@@ -134,33 +134,6 @@ python -m grpc_tools.protoc \
 
 ---
 
-## 📁 Project Structure
-
-```
-microservice-benchmark/
-├── services/
-│   ├── service_a/
-│   │   └── app.py              # Load generator + benchmark runner
-│   ├── service_b/
-│   │   └── app.py              # REST + gRPC processor
-│   └── service_c/
-│       └── app.py              # Log aggregator
-├── proto/
-│   └── messages.proto          # Protobuf service definition
-├── benchmarks/
-│   └── benchmark_runner.py     # Standalone benchmark script (local mode)
-├── docker/
-│   └── Dockerfile.python       # Shared Dockerfile for all Python services
-├── results/
-│   ├── benchmark_results.json  # Generated benchmark data
-│   └── benchmark_dashboard.html # Interactive visualization
-├── docker-compose.yml
-├── requirements.txt
-└── README.md
-```
-
----
-
 ## 🔧 Benchmark Configuration
 
 Edit `benchmarks/benchmark_runner.py` to modify test scenarios:
