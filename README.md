@@ -140,21 +140,12 @@ Edit `benchmarks/benchmark_runner.py` to modify test scenarios:
 
 ```python
 SCENARIOS = [
-    BenchmarkScenario("REST/JSON", "small", num_requests=500, concurrency=1, ...),
-    BenchmarkScenario("gRPC/Protobuf", "small", num_requests=500, concurrency=1, ...),
-    # Add more scenarios...
+    BenchmarkScenario("REST/JSON", "small", num_requests=500, concurrency=1),
+    BenchmarkScenario("gRPC/Protobuf", "small", num_requests=500, concurrency=1),
 ]
 ```
 
 Message size presets in `services/service_a/app.py`:
-
-```python
-payloads = {
-    "small":  {"id": 1, "message": "ping"},              # ~100 bytes
-    "medium": {"message": "x" * 1024, "data": [...]},    # ~1 KB
-    "large":  {"message": "x" * 65536, ...},             # ~64 KB
-}
-```
 
 ---
 
