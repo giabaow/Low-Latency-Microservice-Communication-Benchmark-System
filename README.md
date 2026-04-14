@@ -238,6 +238,3 @@ curl "http://localhost:8002/events/recent?n=10"
 - [HTTP/2 vs HTTP/1.1 Multiplexing](https://http2.github.io/faq/)
 - [Latency Numbers Every Programmer Should Know](https://colin-scott.github.io/personal_website/research/interactive_latency.html)
 
----
-
-*Built as a demonstration project for systems programming internship applications.*
