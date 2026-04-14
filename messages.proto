@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package benchmark;
+
+// ─────────────────────────────────────────────
+// Messages
+// ─────────────────────────────────────────────
+
+message ProcessRequest {
+  int32 id = 1;
+  string message = 2;
+  bytes payload = 3;         // Raw payload (can be JSON or binary)
+  double timestamp = 4;      // Unix timestamp of request creation
+  string client_id = 5;      // ID of the requesting client
+}
+
+message ProcessResponse {
+  string status = 1;
+  string checksum = 2;       // SHA-256 checksum of processed payload
+  double processed_at = 3;   // Unix timestamp of processing completion
+  int64 payload_size_bytes = 4;
+  double processing_time_ms = 5;
+  string error_message = 6;  // Set if status != "processed"
+}
+
+message BatchRequest {
+  repeated ProcessRequest requests = 1;
+}
+
+message BatchResponse {
+  repeated ProcessResponse responses = 1;
+  double total_processing_time_ms = 2;
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  string status = 1;
+  string service = 2;
+  double timestamp = 3;
+}
+
+// ─────────────────────────────────────────────
+// Service Definition
+// ─────────────────────────────────────────────
+
+service Processor {
+  // Unary RPC: single request → single response
+  rpc Process(ProcessRequest) returns (ProcessResponse);
+
+  // Server streaming: single request → stream of responses
+  rpc ProcessBatch(BatchRequest) returns (stream ProcessResponse);
+
+  // Bidirectional streaming: stream of requests → stream of responses
+  rpc ProcessStream(stream ProcessRequest) returns (stream ProcessResponse);
+
+  // Health check
+  rpc HealthCheck(HealthRequest) returns (HealthResponse);
+}

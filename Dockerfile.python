@@ -1,0 +1,31 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# System deps for gRPC
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy all source
+COPY . .
+
+# Generate protobuf stubs
+RUN python -m grpc_tools.protoc \
+    -I proto \
+    --python_out=proto \
+    --grpc_python_out=proto \
+    proto/messages.proto || echo "Proto generation skipped (no .proto found at this path)"
+
+# Create results directory
+RUN mkdir -p /app/results
+
+EXPOSE 8001 8002 50051
+
+CMD ["python", "--version"]

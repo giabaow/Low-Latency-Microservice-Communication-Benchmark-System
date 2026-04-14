@@ -1,0 +1,104 @@
+version: "3.9"
+
+networks:
+  benchmark_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+
+volumes:
+  benchmark_results:
+
+services:
+  # ─────────────────────────────────────────
+  # Service C: Log Aggregator (start first)
+  # ─────────────────────────────────────────
+  service_c:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.python
+    container_name: service_c
+    environment:
+      - REST_PORT=8002
+      - SERVICE_NAME=service_c
+    command: python /app/services/service_c/app.py
+    ports:
+      - "8002:8002"
+    networks:
+      benchmark_net:
+        ipv4_address: 172.20.0.12
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ─────────────────────────────────────────
+  # Service B: Processor (REST + gRPC)
+  # ─────────────────────────────────────────
+  service_b:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.python
+    container_name: service_b
+    environment:
+      - REST_PORT=8001
+      - GRPC_PORT=50051
+      - SERVICE_C_URL=http://service_c:8002
+    command: python /app/services/service_b/app.py
+    ports:
+      - "8001:8001"
+      - "50051:50051"
+    depends_on:
+      service_c:
+        condition: service_healthy
+    networks:
+      benchmark_net:
+        ipv4_address: 172.20.0.11
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ─────────────────────────────────────────
+  # Service A: Benchmark Runner / Load Gen
+  # ─────────────────────────────────────────
+  service_a:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.python
+    container_name: service_a
+    environment:
+      - SERVICE_B_REST=http://service_b:8001
+      - SERVICE_B_GRPC=service_b:50051
+    command: python /app/services/service_a/app.py
+    depends_on:
+      service_b:
+        condition: service_healthy
+    volumes:
+      - benchmark_results:/app/results
+    networks:
+      benchmark_net:
+        ipv4_address: 172.20.0.10
+
+  # ─────────────────────────────────────────
+  # Results Exporter (copies results out)
+  # ─────────────────────────────────────────
+  results_viewer:
+    image: python:3.11-slim
+    container_name: results_viewer
+    volumes:
+      - benchmark_results:/results
+      - ./results:/output
+    command: >
+      sh -c "
+        sleep 60 &&
+        cp /results/benchmark_results.json /output/benchmark_results.json &&
+        echo 'Results exported to ./results/benchmark_results.json'
+      "
+    depends_on:
+      - service_a
+    networks:
+      - benchmark_net
